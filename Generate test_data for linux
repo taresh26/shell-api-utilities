@@ -1,0 +1,78 @@
+generate_test_data.sh
+
+#!/bin/bash
+
+# Function to display an error message and exit
+error_exit() {
+    echo "$1" 1>&2
+    exit 1
+}
+
+# Function to generate test data
+generate_data() {
+    local dir=$1
+    local size=$2
+    local size_unit=$3
+    local total_size=$4
+    local total_size_unit=$5
+
+    # Create the directory if it does not exist
+    if [ ! -d "$dir" ]; then
+        echo "Creating directory $dir..."
+        mkdir -p "$dir" || error_exit "Failed to create directory $dir."
+    fi
+
+    # Calculate the size in bytes
+    local size_bytes
+    case $size_unit in
+        MB) size_bytes=$((size * 1024 * 1024)) ;;
+        GB) size_bytes=$((size * 1024 * 1024 * 1024)) ;;
+        TB) size_bytes=$((size * 1024 * 1024 * 1024 * 1024)) ;;
+        *) error_exit "Invalid size unit: $size_unit" ;;
+    esac
+
+    local total_size_bytes
+    case $total_size_unit in
+        MB) total_size_bytes=$((total_size * 1024 * 1024)) ;;
+        GB) total_size_bytes=$((total_size * 1024 * 1024 * 1024)) ;;
+        TB) total_size_bytes=$((total_size * 1024 * 1024 * 1024 * 1024)) ;;
+        *) error_exit "Invalid total size unit: $total_size_unit" ;;
+    esac
+
+    local files_count=$((total_size_bytes / size_bytes))
+    
+    echo "Generating $total_size $total_size_unit of data in $dir..."
+
+    # Generate files
+    for i in $(seq 1 $files_count); do
+        local file_name="$dir/file_$i.dat"
+        dd if=/dev/urandom of="$file_name" bs="$size_bytes" count=1 iflag=fullblock oflag=direct status=progress || error_exit "Failed to create file $file_name."
+    done
+
+    echo "Data generation completed in $dir."
+}
+
+# Script starts here
+if [ "$#" -ne 5 ]; then
+    echo "Usage: $0 <directory> <file_size> <size_unit> <total_size> <total_size_unit>"
+    echo "Example: $0 /path/to/data 100 MB 10 GB"
+    exit 1
+fi
+
+DIRECTORY=$1
+FILE_SIZE=$2
+SIZE_UNIT=$3
+TOTAL_SIZE=$4
+TOTAL_SIZE_UNIT=$5
+
+# Validate size units
+if ! [[ "$SIZE_UNIT" =~ ^(MB|GB|TB)$ ]]; then
+    error_exit "Invalid size unit: $SIZE_UNIT. Use MB, GB, or TB."
+fi
+
+if ! [[ "$TOTAL_SIZE_UNIT" =~ ^(MB|GB|TB)$ ]]; then
+    error_exit "Invalid total size unit: $TOTAL_SIZE_UNIT. Use MB, GB, or TB."
+fi
+
+# Generate test data
+generate_data "$DIRECTORY" "$FILE_SIZE" "$SIZE_UNIT" "$TOTAL_SIZE" "$TOTAL_SIZE_UNIT"

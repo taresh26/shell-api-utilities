@@ -1,0 +1,40 @@
+
+Explanation
+
+Script Parameters:
+
+DIRECTORY: Directory where the test data will be generated.
+FILE_SIZE: Size of each individual file (e.g., 100).
+SIZE_UNIT: Unit for file size (e.g., MB, GB, TB).
+TOTAL_SIZE: Total size of data to generate (e.g., 10).
+TOTAL_SIZE_UNIT: Unit for total size (e.g., MB, GB, TB).
+Size Conversion:
+
+Converts file and total size from the specified unit to bytes.
+Data Generation:
+
+Uses the dd command to generate random data files of the specified size.
+How to Use the Script
+Save the Script:
+
+Save the script to a file named generate_test_data.sh.
+
+Make It Executable:
+
+bash
+Copy code
+chmod +x generate_test_data.sh
+Run the Script:
+
+Execute the script with the required parameters:
+
+bash
+Copy code
+./generate_test_data.sh /path/to/data 100 MB 10 GB
+This command will create files of size 100 MB each and generate a total of 10 GB of data in the specified directory.
+
+Additional Information
+Directory Creation: The script creates the target directory if it does not already exist.
+Error Handling: Includes basic error handling to manage issues like invalid size units or failures in file creation.
+Data Source: Uses /dev/urandom to generate random data, which may be slow for large files. For faster data generation, consider using a different data source if available.
+This script helps simulate data for backup testing or similar scenarios by generating a significant amount of test data in a controlled manner. Adjust the parameters as needed to fit your specific testing requirements.
