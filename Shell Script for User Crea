@@ -1,0 +1,51 @@
+Shell Script for User Creation, Network Configuration, and Firewall Management on Linux
+
+#!/bin/bash
+
+# Variables
+USERNAME="newuser"
+GROUPNAME="newgroup"
+IP_ADDRESS="192.168.1.100"
+NETMASK="255.255.255.0"
+GATEWAY="192.168.1.1"
+DNS="8.8.8.8"
+INTERFACE="eth0" # Change this to your network interface name
+
+# Create a new user
+echo "Creating user $USERNAME..."
+sudo useradd -m $USERNAME
+
+# Set a password for the new user
+echo "Setting password for $USERNAME..."
+echo "$USERNAME:password" | sudo chpasswd
+
+# Create a new group
+echo "Creating group $GROUPNAME..."
+sudo groupadd $GROUPNAME
+
+# Add the user to the group
+echo "Adding user $USERNAME to group $GROUPNAME..."
+sudo usermod -aG $GROUPNAME $USERNAME
+
+# Assign IP address and configure network
+echo "Configuring network settings for interface $INTERFACE..."
+sudo tee /etc/sysconfig/network-scripts/ifcfg-$INTERFACE <<EOF
+DEVICE=$INTERFACE
+BOOTPROTO=static
+IPADDR=$IP_ADDRESS
+NETMASK=$NETMASK
+GATEWAY=$GATEWAY
+DNS1=$DNS
+ONBOOT=yes
+EOF
+
+# Restart network service to apply changes
+echo "Restarting network service..."
+sudo systemctl restart network
+
+# Disable the firewall (Warning: This can expose your system to security risks)
+echo "Disabling the firewall..."
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+
+echo "Setup complete."
