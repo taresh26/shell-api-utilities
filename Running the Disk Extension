@@ -1,0 +1,54 @@
+Script for Extending a New Disk as a Volume, Creating a Logical Volume Group, Formatting, and Mounting
+
+
+#!/bin/bash
+
+# Variables
+DISK="/dev/sdX"                  # Replace with your new disk (e.g., /dev/sdb)
+VOLUME_GROUP="vg_data"           # Name for the volume group
+LOGICAL_VOLUME="lv_data"         # Name for the logical volume
+MOUNT_POINT="/mnt/data"           # Mount point for the new volume
+FILE_SYSTEM="ext4"               # File system type (ext4 or other)
+
+# Function to display an error message and exit
+error_exit() {
+    echo "$1" 1>&2
+    exit 1
+}
+
+# Check if the disk exists
+if [ ! -b "$DISK" ]; then
+    error_exit "Error: Disk $DISK does not exist."
+fi
+
+# Create a physical volume on the new disk
+echo "Creating physical volume on $DISK..."
+sudo pvcreate "$DISK" || error_exit "Failed to create physical volume."
+
+# Create a volume group
+echo "Creating volume group $VOLUME_GROUP..."
+sudo vgcreate "$VOLUME_GROUP" "$DISK" || error_exit "Failed to create volume group."
+
+# Create a logical volume
+echo "Creating logical volume $LOGICAL_VOLUME..."
+sudo lvcreate -n "$LOGICAL_VOLUME" -l 100%FREE "$VOLUME_GROUP" || error_exit "Failed to create logical volume."
+
+# Format the logical volume with the specified file system
+echo "Formatting logical volume with $FILE_SYSTEM..."
+sudo mkfs."$FILE_SYSTEM" "/dev/$VOLUME_GROUP/$LOGICAL_VOLUME" || error_exit "Failed to format logical volume."
+
+# Create the mount point if it does not exist
+if [ ! -d "$MOUNT_POINT" ]; then
+    echo "Creating mount point $MOUNT_POINT..."
+    sudo mkdir -p "$MOUNT_POINT" || error_exit "Failed to create mount point."
+fi
+
+# Mount the logical volume
+echo "Mounting the logical volume at $MOUNT_POINT..."
+sudo mount "/dev/$VOLUME_GROUP/$LOGICAL_VOLUME" "$MOUNT_POINT" || error_exit "Failed to mount logical volume."
+
+# Add the mount entry to /etc/fstab
+echo "Updating /etc/fstab..."
+echo "/dev/$VOLUME_GROUP/$LOGICAL_VOLUME $MOUNT_POINT $FILE_SYSTEM defaults 0 2" | sudo tee -a /etc/fstab || error_exit "Failed to update /etc/fstab."
+
+echo "Disk extension, formatting, and mounting completed successfully."
