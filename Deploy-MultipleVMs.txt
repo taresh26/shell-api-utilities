@@ -1,0 +1,43 @@
+# Deploy-MultipleVMs.ps1
+# This script automates the creation of multiple VMs in a VMware environment using PowerCLI.
+
+# Required PowerCLI module
+if (-not (Get-Module -ListAvailable -Name VMware.PowerCLI)) {
+    Install-Module -Name VMware.PowerCLI -Force
+    Import-Module VMware.PowerCLI
+}
+
+# Variables
+$VMCount = Read-Host "Enter the number of VMs to deploy"
+$VMNamePrefix = "VM"
+$VMTemplate = "VMTemplate"   # Name of the VM template
+$Datastore = "Datastore1"     # Datastore for the VMs
+$Network = "VM Network"       # Network for the VMs
+$ResourcePool = "Resources"   # Resource pool for the VMs
+$Folder = "VMs"               # Folder to place the VMs in
+
+# Connect to vCenter
+$vCenterServer = Read-Host "Enter vCenter Server hostname or IP"
+$UserName = Read-Host "Enter vCenter username"
+$Password = Read-Host "Enter vCenter password" -AsSecureString
+Connect-VIServer -Server $vCenterServer -User $UserName -Password $Password
+
+# Loop to create multiple VMs
+for ($i = 1; $i -le $VMCount; $i++) {
+    $VMName = "$VMNamePrefix-$i"
+    Write-Host "Deploying VM: $VMName"
+
+    New-VM -Name $VMName `
+        -Template $VMTemplate `
+        -Datastore $Datastore `
+        -NetworkName $Network `
+        -ResourcePool $ResourcePool `
+        -Location $Folder
+
+    Start-VM -VM $VMName
+    Write-Host "$VMName deployed and started successfully."
+}
+
+# Disconnect from vCenter
+Disconnect-VIServer -Server $vCenterServer -Confirm:$false
+Write-Host "Deployment completed."
