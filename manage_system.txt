@@ -1,0 +1,137 @@
+#!/bin/bash
+
+# Function to display usage
+usage() {
+    echo "Usage: $0 {identify|cleanup|update|upgrade} [options]"
+    echo "Commands:"
+    echo "  identify - List installed packages"
+    echo "  cleanup  - Remove unused packages"
+    echo "  update   - Update package lists"
+    echo "  upgrade  - Upgrade installed packages"
+    echo "Options:"
+    echo "  -h, --help        - Display this help message"
+    echo "  -y, --yes         - Automatically confirm prompts"
+    exit 1
+}
+
+# Function to identify packages
+identify_packages() {
+    case "$DISTRO" in
+        "ubuntu" | "debian")
+            echo "Listing installed packages on Ubuntu/Debian..."
+            dpkg -l
+            ;;
+        "redhat" | "centos" | "fedora")
+            echo "Listing installed packages on Red Hat/CentOS/Fedora..."
+            rpm -qa
+            ;;
+        "suse")
+            echo "Listing installed packages on SUSE..."
+            zypper se --installed-only
+            ;;
+        *)
+            echo "Unsupported distribution."
+            usage
+            ;;
+    esac
+}
+
+# Function to clean up unused packages
+cleanup_unused() {
+    case "$DISTRO" in
+        "ubuntu" | "debian")
+            echo "Removing unused packages on Ubuntu/Debian..."
+            sudo apt autoremove ${AUTO_CONFIRM}
+            ;;
+        "redhat" | "centos" | "fedora")
+            echo "Removing unused packages on Red Hat/CentOS/Fedora..."
+            sudo dnf autoremove ${AUTO_CONFIRM}
+            ;;
+        "suse")
+            echo "Removing unused packages on SUSE..."
+            sudo zypper clean ${AUTO_CONFIRM}
+            ;;
+        *)
+            echo "Unsupported distribution."
+            usage
+            ;;
+    esac
+}
+
+# Function to update package lists
+update_system() {
+    case "$DISTRO" in
+        "ubuntu" | "debian")
+            echo "Updating package lists on Ubuntu/Debian..."
+            sudo apt update ${AUTO_CONFIRM}
+            ;;
+        "redhat" | "centos" | "fedora")
+            echo "Updating package lists on Red Hat/CentOS/Fedora..."
+            sudo dnf check-update ${AUTO_CONFIRM}
+            ;;
+        "suse")
+            echo "Updating package lists on SUSE..."
+            sudo zypper refresh ${AUTO_CONFIRM}
+            ;;
+        *)
+            echo "Unsupported distribution."
+            usage
+            ;;
+    esac
+}
+
+# Function to upgrade installed packages
+upgrade_system() {
+    case "$DISTRO" in
+        "ubuntu" | "debian")
+            echo "Upgrading packages on Ubuntu/Debian..."
+            sudo apt upgrade ${AUTO_CONFIRM}
+            ;;
+        "redhat" | "centos" | "fedora")
+            echo "Upgrading packages on Red Hat/CentOS/Fedora..."
+            sudo dnf upgrade ${AUTO_CONFIRM}
+            ;;
+        "suse")
+            echo "Upgrading packages on SUSE..."
+            sudo zypper update ${AUTO_CONFIRM}
+            ;;
+        *)
+            echo "Unsupported distribution."
+            usage
+            ;;
+    esac
+}
+
+# Determine the Linux distribution
+detect_distro() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        case "$ID" in
+            "ubuntu" | "debian")
+                DISTRO="ubuntu"
+                ;;
+            "rhel" | "centos" | "fedora")
+                DISTRO="redhat"
+                ;;
+            "sles")
+                DISTRO="suse"
+                ;;
+            *)
+                echo "Unsupported distribution."
+                usage
+                ;;
+        esac
+    else
+        echo "Cannot detect distribution."
+        usage
+    fi
+}
+
+# Parse command line arguments
+COMMAND=""
+AUTO_CONFIRM=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        identify)
+  

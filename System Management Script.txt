@@ -1,0 +1,16 @@
+# System Management Script
+
+## Overview
+This script provides a generic solution for managing system packages on Linux distributions. It supports Ubuntu (and other Debian-based distributions), Red Hat/CentOS, and SUSE. You can use it to:
+- Identify installed packages
+- Clean up unused packages
+- Update package lists
+- Upgrade installed packages
+
+## Installation
+
+1. **Download the Script**
+   Download the `manage_system.sh` script from the repository or copy it from the provided source.
+
+   ```bash
+   wget https://example.com/path/to/manage_system.sh
