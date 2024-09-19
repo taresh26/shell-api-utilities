@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# Function to display usage
+usage() {
+    echo "Usage: $0 {backup|restore} [options]"
+    echo "Commands:"
+    echo "  backup   - Create a backup of a specified directory"
+    echo "  restore  - Restore a backup to a specified directory"
+    echo "Options:"
+    echo "  -d, --directory    - Directory to back up or restore"
+    echo "  -b, --backup-file  - Backup file to restore from (for restore only)"
+    echo "  -h, --help         - Display this help message"
+    exit 1
+}
+
+# Function to create a backup
+backup() {
+    if [ -z "$DIRECTORY" ]; then
+        echo "Error: Directory to back up is required."
+        usage
+    fi
+
+    BACKUP_FILE="${DIRECTORY}_backup_$(date +%F).tar.gz"
+    echo "Creating backup of '$DIRECTORY' into '$BACKUP_FILE'..."
+    tar -czf "$BACKUP_FILE" "$DIRECTORY"
+    echo "Backup created successfully."
+}
+
+# Function to restore from a backup
+restore() {
+    if [ -z "$BACKUP_FILE" ]; then
+        echo "Error: Backup file is required for restore."
+        usage
+    fi
+
+    if [ -z "$DIRECTORY" ]; then
+        echo "Error: Directory to restore to is required."
+        usage
+    fi
+
+    echo "Restoring from '$BACKUP_FILE' to '$DIRECTORY'..."
+    tar -xzf "$BACKUP_FILE" -C "$DIRECTORY"
+    echo "Restore completed successfully."
+}
+
+# Parse command line arguments
+COMMAND=""
+DIRECTORY=""
+BACKUP_FILE=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        backup)
+            COMMAND="backup"
+            shift
+            ;;
+        restore)
+            COMMAND="restore"
+            shift
+            ;;
+        -d|--directory)
+            DIRECTORY="$2"
+            shift 2
+            ;;
+        -b|--backup-file)
+            BACKUP_FILE="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "Error: Unknown option $1"
+            usage
+            ;;
+    esac
+done
+
+if [ "$COMMAND" == "backup" ]; then
+    backup
+elif [ "$COMMAND" == "restore" ]; then
+    restore
+else
+    echo "Error: Command is required (backup or restore)."
+    usage
+fi
