@@ -1,0 +1,67 @@
+# generate_dummy_data.py
+
+import psycopg2
+from faker import Faker
+import random
+
+# Initialize Faker
+fake = Faker()
+
+# PostgreSQL connection parameters
+DB_HOST = 'localhost'
+DB_NAME = 'your_database_name'
+DB_USER = 'your_username'
+DB_PASS = 'your_password'
+TABLE_NAME = 'your_table_name'  # Update this to your target table name
+
+def create_connection():
+    """Create a database connection."""
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASS
+        )
+        print("Connection to the PostgreSQL database established.")
+    except Exception as e:
+        print(f"Error: {e}")
+    return conn
+
+def generate_dummy_data(num_records):
+    """Generate dummy data for the specified number of records."""
+    data = []
+    for _ in range(num_records):
+        data.append((
+            fake.unique.uuid4(),
+            fake.name(),
+            fake.email(),
+            fake.address(),
+            fake.date_of_birth(),
+            random.randint(18, 90)  # Example: age between 18 and 90
+        ))
+    return data
+
+def insert_data(conn, data):
+    """Insert generated data into the database."""
+    with conn.cursor() as cursor:
+        insert_query = f"""
+        INSERT INTO {TABLE_NAME} (id, name, email, address, dob, age)
+        VALUES (%s, %s, %s, %s, %s, %s);
+        """
+        cursor.executemany(insert_query, data)
+        conn.commit()
+        print(f"{len(data)} records inserted into {TABLE_NAME}.")
+
+def main(num_records):
+    """Main function to execute the utility."""
+    conn = create_connection()
+    if conn:
+        data = generate_dummy_data(num_records)
+        insert_data(conn, data)
+        conn.close()
+
+if __name__ == "__main__":
+    num_records = int(input("Enter the number of records to generate: "))
+    main(num_records)
