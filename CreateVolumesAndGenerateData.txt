@@ -1,0 +1,64 @@
+<#
+.SYNOPSIS
+Creates NTFS, ReFS, and NTFS volumes with deduplication enabled, and generates 50 GB of dynamic file/folder data in each volume.
+
+.DESCRIPTION
+This script initializes specified raw disks, formats them as NTFS or ReFS, enables deduplication on NTFS, and generates 50 GB of random data in each created volume.
+
+.PARAMETER DiskNumberNTFS
+The number of the raw disk to initialize and format as NTFS.
+
+.PARAMETER DiskNumberReFS
+The number of the raw disk to initialize and format as ReFS.
+
+.EXAMPLE
+.\CreateVolumesAndGenerateData.ps1 -DiskNumberNTFS 1 -DiskNumberReFS 2
+#>
+
+param (
+    [int]$DiskNumberNTFS,
+    [int]$DiskNumberReFS
+)
+
+# Function to create a volume and generate data
+function CreateVolumeAndGenerateData {
+    param (
+        [int]$diskNumber,
+        [string]$fileSystem,
+        [bool]$enableDedup
+    )
+    
+    # Initialize the specified raw disk
+    Initialize-Disk -Number $diskNumber -PartitionStyle MBR
+
+    # Create a new volume
+    $partition = New-Partition -DiskNumber $diskNumber -UseMaximumSize -AssignDriveLetter
+    Format-Volume -DriveLetter $partition.DriveLetter -FileSystem $fileSystem -NewFileSystemLabel "${fileSystem}Volume" -Confirm:$false
+
+    # Enable Deduplication if NTFS
+    if ($enableDedup) {
+        Enable-DedupVolume -Volume $partition.DriveLetter
+    }
+
+    # Generate 50 GB of dynamic data
+    $folderPath = "$($partition.DriveLetter):\DynamicData"
+    New-Item -Path $folderPath -ItemType Directory -Force
+
+    $fileSize = 1GB
+    $totalSize = 50GB
+    $filesToCreate = $totalSize / $fileSize
+
+    for ($i = 1; $i -le $filesToCreate; $i++) {
+        $filePath = "$folderPath\File$i.txt"
+        $data = Get-Random -Count $fileSize
+        Set-Content -Path $filePath -Value $data
+    }
+
+    Write-Host "Created $fileSystem volume and generated 50 GB of data in $folderPath."
+}
+
+# Create NTFS Volume and Generate Data
+CreateVolumeAndGenerateData -diskNumber $DiskNumberNTFS -fileSystem "NTFS" -enableDedup $true
+
+# Create ReFS Volume and Generate Data
+CreateVolumeAndGenerateData -diskNumber $DiskNumberReFS -fileSystem "ReFS" -enableDedup $false
